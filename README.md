@@ -49,19 +49,24 @@
 
 ---
 
-## 6. Cronograma Previsto (3 Semanas)
+## 6. Cronograma de 5 Semanas (4h / semana)
 
-### Semana 1: Estrutura Base e Movimento
-*   Configuração do projeto e `CoreMotion`.
-*   Implementação do movimento do drone e limites do ecrã.
-*   Criação do Núcleo central e lógica de spawn de inimigos.
+### Semana 1: O Coração do Jogo (Movimento e Núcleo)
+*   **Hora 1-2:** Configurar `CoreMotion` e garantir que o drone se move sem "lag".
+*   **Hora 3-4:** Criar o Núcleo central e o sistema básico de vida. Limitar o drone às bordas do ecrã.
 
-### Semana 2: Mecânicas de Combate
-*   Sistema de "Carry & Drop" (agarrar torre no centro e largar no mapa).
-*   Lógica de tiro das torres (procura de alvo e spawn de projéteis).
-*   Deteção de colisões e destruição de inimigos.
+### Semana 2: Rondas e Inimigos
+*   **Hora 1-2:** Criar o sistema de Rondas (ex: Array que dita o spawn).
+*   **Hora 3-4:** Lógica de movimento do inimigo em direção ao Núcleo e colisão que retira vida ao Núcleo.
 
-### Semana 3: Interface e Polimento
-*   Criação do HUD (Vida, Vaga atual, Indicador de torre).
-*   Menu Principal e Ecrã de derrota.
-*   Ajuste de dificuldade (balancing) e correção de bugs.
+### Semana 3: Combate e Drop de Torres
+*   **Hora 1-2:** Drone dispara lasers automaticamente. Inimigo morre ao ser atingido.
+*   **Hora 3-4:** Inimigo específico larga item de "Torre". Jogador apanha o item e muda o estado para `isCarryingTower = true`.
+
+### Semana 4: Implementação e Habilidades
+*   **Hora 1-2:** Lógica de tocar no ecrã para largar a torre. A torre dispara para o inimigo mais próximo.
+*   **Hora 3-4:** Implementar a chance de 0.01% da **VX-Null Bomb** e a sua funcionalidade básica (remover todos os nós "enemy").
+
+### Semana 5: Morte, UI e Ajustes Final
+*   **Hora 1-2:** Lógica de colisão Drone-Inimigo: Explosão, espera de 3 segundos e respawn.
+*   **Hora 3-4:** UI básica (Texto da Ronda, Barra de Vida do Núcleo) e ecrã de Game Over. Testes finais em dispositivo físico.
