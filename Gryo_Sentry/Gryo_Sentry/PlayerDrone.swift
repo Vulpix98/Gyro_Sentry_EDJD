@@ -1,0 +1,82 @@
+import SpriteKit
+
+final class PlayerDrone: SKShapeNode {
+    struct Config {
+        var size: CGSize = CGSize(width: 28, height: 28)
+        var cornerRadius: CGFloat = 6
+        var speedPointsPerSecond: CGFloat = 420
+        var fireCooldownSeconds: TimeInterval = 0.18
+    }
+
+    private(set) var config: Config
+    private var fireCooldownRemaining: TimeInterval = 0
+
+    init(config: Config = Config()) {
+        self.config = config
+        super.init()
+
+        path = CGPath(
+            roundedRect: CGRect(
+                x: -config.size.width / 2,
+                y: -config.size.height / 2,
+                width: config.size.width,
+                height: config.size.height
+            ),
+            cornerWidth: config.cornerRadius,
+            cornerHeight: config.cornerRadius,
+            transform: nil
+        )
+
+        fillColor = SKColor(red: 0.1, green: 0.85, blue: 1.0, alpha: 1.0)
+        strokeColor = .clear
+        isAntialiased = true
+        name = "player"
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        return nil
+    }
+
+    func update(
+        dt: TimeInterval,
+        input: CGVector,
+        clamp: (CGPoint, SKNode) -> CGPoint
+    ) {
+        guard dt > 0 else { return }
+
+        move(dt: dt, input: input, clamp: clamp)
+        tickAutofire(dt: dt)
+    }
+
+    // MARK: - Collision hooks (stubs for now)
+
+    func onHitEnemy() {
+        // TODO: used later for “player dies on collision” mechanics.
+    }
+
+    // MARK: - Auto-fire (cadence stub)
+
+    private func tickAutofire(dt: TimeInterval) {
+        fireCooldownRemaining = max(0, fireCooldownRemaining - dt)
+        if fireCooldownRemaining == 0 {
+            // We don’t have enemies/projectiles yet; this just establishes timing.
+            fireCooldownRemaining = config.fireCooldownSeconds
+        }
+    }
+
+    private func move(
+        dt: TimeInterval,
+        input: CGVector,
+        clamp: (CGPoint, SKNode) -> CGPoint
+    ) {
+        let dtf = CGFloat(dt)
+        let vx = input.dx * config.speedPointsPerSecond
+        let vy = input.dy * config.speedPointsPerSecond
+
+        var next = position
+        next.x += vx * dtf
+        next.y += vy * dtf
+        position = clamp(next, self)
+    }
+}
+

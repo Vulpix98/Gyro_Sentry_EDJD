@@ -1,88 +1,198 @@
-//
-//  GameScene.swift
-//  Gryo_Sentry
-//
-//  Created by Aluno Tmp on 22/04/2026.
-//
-// test xpto
 import SpriteKit
 import GameplayKit
 
 class GameScene: SKScene {
-    
-    private var label : SKLabelNode?
-    private var spinnyNode : SKShapeNode?
-    
+
+    private enum GameState {
+        case playing
+        case gameOver
+    }
+
+    private var gameState: GameState = .playing
+
+    // MARK: - World nodes (placeholder visuals: colored cubes/rects)
+    private var coreNode: CoreBase!
+    private var playerNode: PlayerDrone!
+
+    // MARK: - Simulation
+    private var lastUpdateTime: TimeInterval = 0
+
+    // Temporary test input (touch “virtual stick”).
+    private var activeTouch: UITouch?
+    private var inputVector: CGVector = .zero
+
+    // Temporary keyboard input (arrow keys). Works in Simulator / with hardware keyboard.
+    private var keyLeft = false
+    private var keyRight = false
+    private var keyUp = false
+    private var keyDown = false
+
+    // Tunables
+    private let worldMargin: CGFloat = 16
+
     override func didMove(to view: SKView) {
-        
-        // Get label node from scene and store it for use later
-        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-        if let label = self.label {
-            label.alpha = 0.0
-            label.run(SKAction.fadeIn(withDuration: 2.0))
-        }
-        
-        // Create shape node to use during mouse interaction
-        let w = (self.size.width + self.size.height) * 0.05
-        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
-        
-        if let spinnyNode = self.spinnyNode {
-            spinnyNode.lineWidth = 2.5
-            
-            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-                                              SKAction.fadeOut(withDuration: 0.5),
-                                              SKAction.removeFromParent()]))
-        }
+        removeAllActions()
+
+        backgroundColor = .black
+
+        // If the .sks contains template nodes, remove them.
+        childNode(withName: "//helloLabel")?.removeFromParent()
+
+        setupWorld()
     }
-    
-    
-    func touchDown(atPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.green
-            self.addChild(n)
+
+    private func setupWorld() {
+        // Core (center)
+        let core = CoreBase()
+        core.position = CGPoint(x: frame.midX, y: frame.midY)
+        core.onDepleted = { [weak self] in
+            self?.triggerGameOver()
         }
+        addChild(core)
+        coreNode = core
+
+        // Player (starts at the core)
+        let player = PlayerDrone()
+        player.position = core.position
+        addChild(player)
+        playerNode = player
     }
-    
-    func touchMoved(toPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.blue
-            self.addChild(n)
-        }
-    }
-    
-    func touchUp(atPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.red
-            self.addChild(n)
-        }
-    }
-    
+
+    // MARK: - Input (temporary)
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let label = self.label {
-            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
+        guard gameState == .playing else { return }
+        if activeTouch == nil, let t = touches.first {
+            activeTouch = t
+            updateInput(from: t.location(in: self))
         }
-        
-        for t in touches { self.touchDown(atPoint: t.location(in: self)) }
     }
-    
+
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchMoved(toPoint: t.location(in: self)) }
+        guard gameState == .playing else { return }
+        guard let activeTouch else { return }
+        if touches.contains(activeTouch) {
+            updateInput(from: activeTouch.location(in: self))
+        }
     }
-    
+
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
+        guard let activeTouch else { return }
+        if touches.contains(activeTouch) {
+            self.activeTouch = nil
+            inputVector = .zero
+        }
     }
-    
+
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
+        touchesEnded(touches, with: event)
     }
-    
-    
+
+    private func updateInput(from touchPosition: CGPoint) {
+        // “Virtual stick”: vector from player -> touch, clamped to unit length.
+        let dx = touchPosition.x - playerNode.position.x
+        let dy = touchPosition.y - playerNode.position.y
+        let len = max(CGFloat(1), sqrt(dx * dx + dy * dy))
+        let nx = dx / len
+        let ny = dy / len
+        inputVector = CGVector(dx: nx, dy: ny)
+    }
+
+    // MARK: - Update loop
+
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
+        guard gameState == .playing else { return }
+
+        let dt: TimeInterval
+        if lastUpdateTime == 0 {
+            dt = 0
+        } else {
+            dt = currentTime - lastUpdateTime
+        }
+        lastUpdateTime = currentTime
+
+        updateInputVectorFromKeyboardIfTouchIsInactive()
+        playerNode.update(dt: dt, input: inputVector, clamp: clampToWorld)
+
+        // Stubs for upcoming systems (enemies, waves, towers, combat, UI).
+        // These will become real once we implement the corresponding TODOs.
+        updateWaves(dt: dt)
+        updateEnemies(dt: dt)
+        updateTowers(dt: dt)
+    }
+
+    private func clampToWorld(_ position: CGPoint, _ node: SKNode) -> CGPoint {
+        let halfW = node.frame.width / 2
+        let halfH = node.frame.height / 2
+        let minX = frame.minX + worldMargin + halfW
+        let maxX = frame.maxX - worldMargin - halfW
+        let minY = frame.minY + worldMargin + halfH
+        let maxY = frame.maxY - worldMargin - halfH
+
+        return CGPoint(
+            x: min(max(position.x, minX), maxX),
+            y: min(max(position.y, minY), maxY)
+        )
+    }
+
+    private func updateInputVectorFromKeyboardIfTouchIsInactive() {
+        // Touch “virtual stick” overrides keyboard.
+        if activeTouch != nil { return }
+
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        if keyLeft { x -= 1 }
+        if keyRight { x += 1 }
+        if keyUp { y += 1 }
+        if keyDown { y -= 1 }
+
+        // Normalize diagonal movement.
+        let len = max(1, sqrt(x * x + y * y))
+        inputVector = CGVector(dx: x / len, dy: y / len)
+    }
+
+    // MARK: - Keyboard hooks (called by GameViewController)
+
+    func setArrowKey(_ key: ArrowKey, isDown: Bool) {
+        switch key {
+        case .left: keyLeft = isDown
+        case .right: keyRight = isDown
+        case .up: keyUp = isDown
+        case .down: keyDown = isDown
+        }
+    }
+
+    enum ArrowKey {
+        case left, right, up, down
+    }
+
+    // MARK: - Debug hooks
+
+    func debugDamageCore() {
+        coreNode.damage(10)
+    }
+
+    func debugHealCore() {
+        coreNode.heal(10)
+    }
+
+    private func triggerGameOver() {
+        guard gameState != .gameOver else { return }
+        gameState = .gameOver
+
+        // Light red background on game over.
+        backgroundColor = SKColor(red: 0.35, green: 0.05, blue: 0.08, alpha: 1.0)
+    }
+
+    private func updateWaves(dt: TimeInterval) {
+        _ = dt
+    }
+
+    private func updateEnemies(dt: TimeInterval) {
+        _ = dt
+    }
+
+    private func updateTowers(dt: TimeInterval) {
+        _ = dt
     }
 }
