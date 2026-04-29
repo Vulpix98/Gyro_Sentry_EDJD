@@ -1,7 +1,7 @@
 import SpriteKit
 import GameplayKit
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private enum GameState {
         case playing
@@ -13,6 +13,8 @@ class GameScene: SKScene {
     // MARK: - World nodes (placeholder visuals: colored cubes/rects)
     private var coreNode: CoreBase!
     private var playerNode: PlayerDrone!
+    private var enemies: [Enemy] = []
+    private let waveManager = WaveManager()
 
     // MARK: - Simulation
     private var lastUpdateTime: TimeInterval = 0
@@ -37,6 +39,9 @@ class GameScene: SKScene {
 
         // If the .sks contains template nodes, remove them.
         childNode(withName: "//helloLabel")?.removeFromParent()
+
+        physicsWorld.gravity = .zero
+        physicsWorld.contactDelegate = self
 
         setupWorld()
     }
@@ -185,14 +190,94 @@ class GameScene: SKScene {
     }
 
     private func updateWaves(dt: TimeInterval) {
-        _ = dt
+        let spawns = waveManager.update(dt: dt)
+        for spawn in spawns {
+            spawnEnemy(isCarrier: spawn.isCarrier)
+        }
     }
 
     private func updateEnemies(dt: TimeInterval) {
-        _ = dt
+        let target = coreNode.position
+        for enemy in enemies {
+            enemy.update(dt: dt, toward: target)
+        }
+
+        enemies.removeAll { $0.parent == nil }
     }
 
     private func updateTowers(dt: TimeInterval) {
         _ = dt
+    }
+
+    private func spawnEnemy(isCarrier: Bool) {
+        let enemy = Enemy(config: .init(isCarrier: isCarrier))
+        enemy.position = randomSpawnPointOnEdge(padding: 40)
+        addChild(enemy)
+        enemies.append(enemy)
+    }
+
+    private func randomSpawnPointOnEdge(padding: CGFloat) -> CGPoint {
+        let minX = frame.minX + padding
+        let maxX = frame.maxX - padding
+        let minY = frame.minY + padding
+        let maxY = frame.maxY - padding
+
+        let side = Int.random(in: 0..<4)
+        switch side {
+        case 0: // left
+            return CGPoint(x: frame.minX - padding, y: CGFloat.random(in: minY...maxY))
+        case 1: // right
+            return CGPoint(x: frame.maxX + padding, y: CGFloat.random(in: minY...maxY))
+        case 2: // bottom
+            return CGPoint(x: CGFloat.random(in: minX...maxX), y: frame.minY - padding)
+        default: // top
+            return CGPoint(x: CGFloat.random(in: minX...maxX), y: frame.maxY + padding)
+        }
+    }
+
+    // MARK: - Physics contacts
+
+    func didBegin(_ contact: SKPhysicsContact) {
+        guard gameState == .playing else { return }
+
+        let a = contact.bodyA
+        let b = contact.bodyB
+
+        let mask = a.categoryBitMask | b.categoryBitMask
+
+        if mask == (PhysicsCategory.core | PhysicsCategory.enemy) {
+            let coreBody = (a.categoryBitMask == PhysicsCategory.core) ? a : b
+            let enemyBody = (a.categoryBitMask == PhysicsCategory.enemy) ? a : b
+            handleCoreEnemyContact(coreBody: coreBody, enemyBody: enemyBody)
+            return
+        }
+
+        if mask == (PhysicsCategory.player | PhysicsCategory.enemy) {
+            let enemyBody = (a.categoryBitMask == PhysicsCategory.enemy) ? a : b
+            handlePlayerEnemyContact(enemyBody: enemyBody)
+            return
+        }
+
+        if mask == (PhysicsCategory.player | PhysicsCategory.pickup) {
+            handlePickupContact(pickupBody: (a.categoryBitMask == PhysicsCategory.pickup) ? a : b)
+            return
+        }
+    }
+
+    private func handleCoreEnemyContact(coreBody: SKPhysicsBody, enemyBody: SKPhysicsBody) {
+        _ = coreBody
+        enemyBody.node?.removeFromParent()
+        coreNode.damage(5)
+    }
+
+    private func handlePlayerEnemyContact(enemyBody: SKPhysicsBody) {
+        // TODO: Implement “player death/respawn” TODO later; for now just provide a hook.
+        enemyBody.node?.removeFromParent()
+        playerNode.onHitEnemy()
+    }
+
+    private func handlePickupContact(pickupBody: SKPhysicsBody) {
+        // TODO: Once `Pickup.swift` exists, set “carrying tower” state and remove pickup.
+        pickupBody.node?.removeFromParent()
     }
 }

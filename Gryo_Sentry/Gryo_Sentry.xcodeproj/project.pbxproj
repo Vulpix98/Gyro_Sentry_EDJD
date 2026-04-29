@@ -14,6 +14,9 @@
 		07B1CCB02F98D54F00C54FBD /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCAF2F98D54F00C54FBD /* GameViewController.swift */; };
 		07B1CCBC2F9A7B2E00C54FBD /* PlayerDrone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCBB2F9A7B2E00C54FBD /* PlayerDrone.swift */; };
 		07B1CCBE2F9A7D1B00C54FBD /* CoreBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCBD2F9A7D1B00C54FBD /* CoreBase.swift */; };
+		07B1CCBF2FA004A600C54FBD /* PhysicsCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCB02FA004A600C54FBD /* PhysicsCategory.swift */; };
+		07B1CCC12FA0051100C54FBD /* Enemy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCC02FA0051100C54FBD /* Enemy.swift */; };
+		07B1CCC32FA0051A00C54FBD /* WaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCC22FA0051A00C54FBD /* WaveManager.swift */; };
 		07B1CCB32F98D54F00C54FBD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB12F98D54F00C54FBD /* Main.storyboard */; };
 		07B1CCB52F98D55000C54FBD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB42F98D55000C54FBD /* Assets.xcassets */; };
 		07B1CCB82F98D55000C54FBD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB62F98D55000C54FBD /* LaunchScreen.storyboard */; };
@@ -28,6 +31,9 @@
 		07B1CCAF2F98D54F00C54FBD /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		07B1CCBB2F9A7B2E00C54FBD /* PlayerDrone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDrone.swift; sourceTree = "<group>"; };
 		07B1CCBD2F9A7D1B00C54FBD /* CoreBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBase.swift; sourceTree = "<group>"; };
+		07B1CCB02FA004A600C54FBD /* PhysicsCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicsCategory.swift; sourceTree = "<group>"; };
+		07B1CCC02FA0051100C54FBD /* Enemy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enemy.swift; sourceTree = "<group>"; };
+		07B1CCC22FA0051A00C54FBD /* WaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveManager.swift; sourceTree = "<group>"; };
 		07B1CCB22F98D54F00C54FBD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		07B1CCB42F98D55000C54FBD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		07B1CCB72F98D55000C54FBD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -70,6 +76,9 @@
 				07B1CCAF2F98D54F00C54FBD /* GameViewController.swift */,
 				07B1CCBB2F9A7B2E00C54FBD /* PlayerDrone.swift */,
 				07B1CCBD2F9A7D1B00C54FBD /* CoreBase.swift */,
+				07B1CCB02FA004A600C54FBD /* PhysicsCategory.swift */,
+				07B1CCC02FA0051100C54FBD /* Enemy.swift */,
+				07B1CCC22FA0051A00C54FBD /* WaveManager.swift */,
 				07B1CCB12F98D54F00C54FBD /* Main.storyboard */,
 				07B1CCB42F98D55000C54FBD /* Assets.xcassets */,
 				07B1CCB62F98D55000C54FBD /* LaunchScreen.storyboard */,
@@ -155,6 +164,9 @@
 				07B1CCA82F98D54F00C54FBD /* AppDelegate.swift in Sources */,
 				07B1CCBC2F9A7B2E00C54FBD /* PlayerDrone.swift in Sources */,
 				07B1CCBE2F9A7D1B00C54FBD /* CoreBase.swift in Sources */,
+				07B1CCBF2FA004A600C54FBD /* PhysicsCategory.swift in Sources */,
+				07B1CCC12FA0051100C54FBD /* Enemy.swift in Sources */,
+				07B1CCC32FA0051A00C54FBD /* WaveManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

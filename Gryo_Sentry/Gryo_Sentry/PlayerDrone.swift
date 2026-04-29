@@ -31,6 +31,17 @@ final class PlayerDrone: SKShapeNode {
         strokeColor = .clear
         isAntialiased = true
         name = "player"
+
+        let body = SKPhysicsBody(rectangleOf: config.size)
+        body.affectedByGravity = false
+        body.allowsRotation = false
+        body.linearDamping = 0
+        body.friction = 0
+        body.restitution = 0
+        body.categoryBitMask = PhysicsCategory.player
+        body.collisionBitMask = PhysicsCategory.none
+        body.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.pickup | PhysicsCategory.core
+        physicsBody = body
     }
 
     required init?(coder aDecoder: NSCoder) {

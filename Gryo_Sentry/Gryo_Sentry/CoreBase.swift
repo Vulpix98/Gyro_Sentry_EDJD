@@ -56,6 +56,15 @@ final class CoreBase: SKNode {
         barContainer.addChild(barBackground)
         barContainer.addChild(barFill)
 
+        let body = SKPhysicsBody(rectangleOf: config.size)
+        body.affectedByGravity = false
+        body.allowsRotation = false
+        body.isDynamic = false
+        body.categoryBitMask = PhysicsCategory.core
+        body.collisionBitMask = PhysicsCategory.none
+        body.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.player
+        physicsBody = body
+
         updateBar()
     }
 
