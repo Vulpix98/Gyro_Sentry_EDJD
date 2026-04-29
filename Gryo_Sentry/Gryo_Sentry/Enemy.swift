@@ -6,13 +6,16 @@ final class Enemy: SKShapeNode {
         var cornerRadius: CGFloat = 6
         var speedPointsPerSecond: CGFloat = 120
         var isCarrier: Bool = false
+        var maxHP: Int = 10
     }
 
     let config: Config
     private(set) var isAlive: Bool = true
+    private(set) var hp: Int
 
     init(config: Config = Config()) {
         self.config = config
+        self.hp = max(1, config.maxHP)
         super.init()
 
         path = CGPath(
@@ -69,6 +72,15 @@ final class Enemy: SKShapeNode {
         guard isAlive else { return }
         isAlive = false
         removeFromParent()
+    }
+
+    func applyDamage(_ amount: Int) {
+        guard isAlive else { return }
+        guard amount > 0 else { return }
+        hp -= amount
+        if hp <= 0 {
+            kill()
+        }
     }
 }
 

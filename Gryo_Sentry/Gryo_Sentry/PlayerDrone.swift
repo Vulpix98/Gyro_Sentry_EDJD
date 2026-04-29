@@ -6,10 +6,12 @@ final class PlayerDrone: SKShapeNode {
         var cornerRadius: CGFloat = 6
         var speedPointsPerSecond: CGFloat = 420
         var fireCooldownSeconds: TimeInterval = 0.18
+        var fireRangePoints: CGFloat = 360
     }
 
     private(set) var config: Config
     private var fireCooldownRemaining: TimeInterval = 0
+    var onFire: ((CGFloat) -> Void)?
 
     init(config: Config = Config()) {
         self.config = config
@@ -70,7 +72,7 @@ final class PlayerDrone: SKShapeNode {
     private func tickAutofire(dt: TimeInterval) {
         fireCooldownRemaining = max(0, fireCooldownRemaining - dt)
         if fireCooldownRemaining == 0 {
-            // We don’t have enemies/projectiles yet; this just establishes timing.
+            onFire?(config.fireRangePoints)
             fireCooldownRemaining = config.fireCooldownSeconds
         }
     }

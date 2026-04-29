@@ -31,6 +31,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // Tunables
     private let worldMargin: CGFloat = 16
+    private let laserDamage: Int = 3
 
     override func didMove(to view: SKView) {
         removeAllActions()
@@ -59,6 +60,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Player (starts at the core)
         let player = PlayerDrone()
         player.position = core.position
+        player.onFire = { [weak self] range in
+            self?.playerAutofire(range: range)
+        }
         addChild(player)
         playerNode = player
     }
@@ -207,6 +211,47 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func updateTowers(dt: TimeInterval) {
         _ = dt
+    }
+
+    private func playerAutofire(range: CGFloat) {
+        guard let target = nearestEnemy(to: playerNode.position, maxRange: range) else { return }
+        target.applyDamage(laserDamage)
+        spawnLaserEffect(from: playerNode.position, to: target.position)
+    }
+
+    private func nearestEnemy(to origin: CGPoint, maxRange: CGFloat) -> Enemy? {
+        let maxR2 = maxRange * maxRange
+        var best: Enemy?
+        var bestD2: CGFloat = .greatestFiniteMagnitude
+
+        for enemy in enemies where enemy.parent != nil && enemy.isAlive {
+            let dx = enemy.position.x - origin.x
+            let dy = enemy.position.y - origin.y
+            let d2 = dx * dx + dy * dy
+            if d2 <= maxR2, d2 < bestD2 {
+                best = enemy
+                bestD2 = d2
+            }
+        }
+
+        return best
+    }
+
+    private func spawnLaserEffect(from start: CGPoint, to end: CGPoint) {
+        let path = CGMutablePath()
+        path.move(to: start)
+        path.addLine(to: end)
+
+        let line = SKShapeNode(path: path)
+        line.strokeColor = SKColor(red: 0.35, green: 1.0, blue: 0.9, alpha: 0.95)
+        line.lineWidth = 3
+        line.glowWidth = 6
+        line.zPosition = 1000
+        addChild(line)
+
+        let fade = SKAction.fadeOut(withDuration: 0.08)
+        let remove = SKAction.removeFromParent()
+        line.run(.sequence([fade, remove]))
     }
 
     private func spawnEnemy(isCarrier: Bool) {
