@@ -1,0 +1,6 @@
+{"location":"GameScene.swift:didMove","sessionId":"3e74d7","message":"Scene initialized","hypothesisId":"H4","data":{"sceneSize":"750.0x1334.0"},"runId":"pre-fix","timestamp":1778064808683}
+{"runId":"pre-fix","location":"GameScene.swift:spawnTowerPickup","hypothesisId":"H2","sessionId":"3e74d7","message":"Spawning pickup","timestamp":1778064814801,"data":{"x":"229.0823974609375","y":"-140.2725372314453"}}
+{"data":{"alreadyCarryingTower":"false"},"location":"GameScene.swift:handlePickupContact","hypothesisId":"H3","message":"Pickup contact detected","timestamp":1778064818335,"runId":"pre-fix","sessionId":"3e74d7"}
+{"hypothesisId":"H4","timestamp":1778064906512,"sessionId":"3e74d7","message":"Scene initialized","runId":"pre-fix","location":"GameScene.swift:didMove","data":{"sceneSize":"750.0x1334.0"}}
+{"message":"Spawning pickup","timestamp":1778064914888,"data":{"y":"4.187727451324463","x":"-97.29337310791016"},"hypothesisId":"H2","location":"GameScene.swift:spawnTowerPickup","sessionId":"3e74d7","runId":"pre-fix"}
+{"sessionId":"3e74d7","location":"GameScene.swift:handlePickupContact","message":"Pickup contact detected","hypothesisId":"H3","timestamp":1778064916087,"runId":"pre-fix","data":{"alreadyCarryingTower":"false"}}

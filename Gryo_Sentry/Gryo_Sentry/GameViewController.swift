@@ -71,6 +71,8 @@ class GameViewController: UIViewController {
                     if isDown { scene.debugDamageCore() }
                 case "y":
                     if isDown { scene.debugHealCore() }
+                case "u":
+                    if isDown { scene.placeTowerIfCarrying() }
                 default: break
                 }
             }

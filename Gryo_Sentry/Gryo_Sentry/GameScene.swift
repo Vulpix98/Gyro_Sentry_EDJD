@@ -14,6 +14,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var coreNode: CoreBase!
     private var playerNode: PlayerDrone!
     private var enemies: [Enemy] = []
+    private var towers: [Tower] = []
+    private var isCarryingTower = false
+    private var carryIndicatorNode: SKShapeNode?
+    private var isPlayerRespawning = false
+    private var playerRespawnRemaining: TimeInterval = 0
     private let waveManager = WaveManager()
 
     // MARK: - Simulation
@@ -32,6 +37,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     // Tunables
     private let worldMargin: CGFloat = 16
     private let laserDamage: Int = 3
+    private let towerPlacementMargin: CGFloat = 28
+    private let carrierDropChance: CGFloat = 1.0
+    private let playerRespawnDelay: TimeInterval = 3.0
 
     override func didMove(to view: SKView) {
         removeAllActions()
@@ -65,6 +73,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         addChild(player)
         playerNode = player
+
+        let indicatorSize = CGSize(width: 36, height: 36)
+        let indicator = SKShapeNode(
+            rectOf: indicatorSize,
+            cornerRadius: 8
+        )
+        indicator.strokeColor = SKColor(red: 0.25, green: 1.0, blue: 0.35, alpha: 0.95)
+        indicator.lineWidth = 2
+        indicator.fillColor = .clear
+        indicator.zPosition = 60
+        indicator.isHidden = true
+        player.addChild(indicator)
+        carryIndicatorNode = indicator
     }
 
     // MARK: - Input (temporary)
@@ -121,7 +142,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         lastUpdateTime = currentTime
 
         updateInputVectorFromKeyboardIfTouchIsInactive()
-        playerNode.update(dt: dt, input: inputVector, clamp: clampToWorld)
+        if isPlayerRespawning {
+            updatePlayerRespawnTimer(dt: dt)
+        } else {
+            playerNode.update(dt: dt, input: inputVector, clamp: clampToWorld)
+        }
 
         // Stubs for upcoming systems (enemies, waves, towers, combat, UI).
         // These will become real once we implement the corresponding TODOs.
@@ -171,6 +196,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+    func placeTowerIfCarrying() {
+        guard gameState == .playing else { return }
+        guard !isPlayerRespawning else { return }
+        guard isCarryingTower else { return }
+
+        let tower = Tower()
+        tower.position = clampTowerPosition(playerNode.position, tower: tower)
+        addChild(tower)
+        towers.append(tower)
+        setCarryingTower(false)
+    }
+
     enum ArrowKey {
         case left, right, up, down
     }
@@ -210,12 +247,36 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func updateTowers(dt: TimeInterval) {
-        _ = dt
+        for tower in towers where tower.parent != nil {
+            let targetBefore = nearestEnemy(to: tower.position, maxRange: tower.config.fireRangePoints)
+            let wasAlive = targetBefore?.isAlive ?? false
+            let wasCarrier = targetBefore?.config.isCarrier ?? false
+            let targetPosition = targetBefore?.position
+
+            if let firedTarget = tower.updateAndFireIfReady(dt: dt, acquireTarget: nearestEnemy) {
+                spawnTowerBeamEffect(from: tower.position, to: firedTarget.position)
+                if wasAlive, let resolvedTarget = targetBefore, !resolvedTarget.isAlive {
+                    handleEnemyDefeated(at: targetPosition ?? resolvedTarget.position, wasCarrier: wasCarrier)
+                }
+            }
+
+            if tower.isDepleted {
+                tower.removeFromParent()
+            }
+        }
+
+        towers.removeAll { $0.parent == nil }
     }
 
     private func playerAutofire(range: CGFloat) {
         guard let target = nearestEnemy(to: playerNode.position, maxRange: range) else { return }
+        let targetWasAlive = target.isAlive
+        let targetWasCarrier = target.config.isCarrier
+        let targetPosition = target.position
         target.applyDamage(laserDamage)
+        if targetWasAlive, !target.isAlive {
+            handleEnemyDefeated(at: targetPosition, wasCarrier: targetWasCarrier)
+        }
         spawnLaserEffect(from: playerNode.position, to: target.position)
     }
 
@@ -250,6 +311,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(line)
 
         let fade = SKAction.fadeOut(withDuration: 0.08)
+        let remove = SKAction.removeFromParent()
+        line.run(.sequence([fade, remove]))
+    }
+
+    private func spawnTowerBeamEffect(from start: CGPoint, to end: CGPoint) {
+        let path = CGMutablePath()
+        path.move(to: start)
+        path.addLine(to: end)
+
+        let line = SKShapeNode(path: path)
+        line.strokeColor = SKColor(red: 0.75, green: 0.45, blue: 1.0, alpha: 0.95)
+        line.lineWidth = 2
+        line.glowWidth = 5
+        line.zPosition = 950
+        addChild(line)
+
+        let fade = SKAction.fadeOut(withDuration: 0.1)
         let remove = SKAction.removeFromParent()
         line.run(.sequence([fade, remove]))
     }
@@ -311,18 +389,95 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func handleCoreEnemyContact(coreBody: SKPhysicsBody, enemyBody: SKPhysicsBody) {
         _ = coreBody
-        enemyBody.node?.removeFromParent()
+        if let enemy = enemyBody.node as? Enemy {
+            handleEnemyDefeated(at: enemy.position, wasCarrier: enemy.config.isCarrier)
+            enemy.kill()
+        } else {
+            enemyBody.node?.removeFromParent()
+        }
         coreNode.damage(5)
     }
 
     private func handlePlayerEnemyContact(enemyBody: SKPhysicsBody) {
-        // TODO: Implement “player death/respawn” TODO later; for now just provide a hook.
-        enemyBody.node?.removeFromParent()
+        guard !isPlayerRespawning else { return }
+
+        if let enemy = enemyBody.node as? Enemy {
+            handleEnemyDefeated(at: enemy.position, wasCarrier: enemy.config.isCarrier)
+            enemy.kill()
+        } else {
+            enemyBody.node?.removeFromParent()
+        }
+
+        triggerPlayerDeath()
         playerNode.onHitEnemy()
     }
 
     private func handlePickupContact(pickupBody: SKPhysicsBody) {
-        // TODO: Once `Pickup.swift` exists, set “carrying tower” state and remove pickup.
+        setCarryingTower(true)
         pickupBody.node?.removeFromParent()
+    }
+
+    private func handleEnemyDefeated(at position: CGPoint, wasCarrier: Bool) {
+        guard wasCarrier else { return }
+        guard !isCarryingTower else { return }
+        guard CGFloat.random(in: 0...1) <= carrierDropChance else { return }
+        spawnTowerPickup(at: position)
+    }
+
+    private func spawnTowerPickup(at position: CGPoint) {
+        let pickup = Pickup()
+        pickup.position = position
+        addChild(pickup)
+    }
+
+    private func setCarryingTower(_ carrying: Bool) {
+        isCarryingTower = carrying
+        carryIndicatorNode?.isHidden = !carrying
+    }
+
+    private func triggerPlayerDeath() {
+        guard !isPlayerRespawning else { return }
+        let deathPosition = playerNode.position
+        isPlayerRespawning = true
+        playerRespawnRemaining = playerRespawnDelay
+        playerNode.deactivateForRespawn()
+        spawnPlayerExplosion(at: deathPosition)
+    }
+
+    private func updatePlayerRespawnTimer(dt: TimeInterval) {
+        guard dt > 0 else { return }
+        playerRespawnRemaining = max(0, playerRespawnRemaining - dt)
+        if playerRespawnRemaining == 0 {
+            isPlayerRespawning = false
+            playerNode.respawn(at: coreNode.position)
+        }
+    }
+
+    private func spawnPlayerExplosion(at position: CGPoint) {
+        let blast = SKShapeNode(circleOfRadius: 10)
+        blast.position = position
+        blast.fillColor = SKColor(red: 0.15, green: 0.95, blue: 1.0, alpha: 0.85)
+        blast.strokeColor = SKColor(red: 0.8, green: 1.0, blue: 1.0, alpha: 1.0)
+        blast.lineWidth = 2
+        blast.zPosition = 1200
+        addChild(blast)
+
+        let grow = SKAction.scale(to: 2.8, duration: 0.18)
+        let fade = SKAction.fadeOut(withDuration: 0.18)
+        let remove = SKAction.removeFromParent()
+        blast.run(.sequence([.group([grow, fade]), remove]))
+    }
+
+    private func clampTowerPosition(_ position: CGPoint, tower: Tower) -> CGPoint {
+        let halfW = tower.frame.width / 2
+        let halfH = tower.frame.height / 2
+        let minX = frame.minX + towerPlacementMargin + halfW
+        let maxX = frame.maxX - towerPlacementMargin - halfW
+        let minY = frame.minY + towerPlacementMargin + halfH
+        let maxY = frame.maxY - towerPlacementMargin - halfH
+        return CGPoint(
+            x: min(max(position.x, minX), maxX),
+            y: min(max(position.y, minY), maxY)
+        )
     }
 }

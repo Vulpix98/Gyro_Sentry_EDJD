@@ -17,6 +17,8 @@
 		07B1CCBF2FA004A600C54FBD /* PhysicsCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCB02FA004A600C54FBD /* PhysicsCategory.swift */; };
 		07B1CCC12FA0051100C54FBD /* Enemy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCC02FA0051100C54FBD /* Enemy.swift */; };
 		07B1CCC32FA0051A00C54FBD /* WaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCC22FA0051A00C54FBD /* WaveManager.swift */; };
+		07B1CCC52FA1051A00C54FBD /* Pickup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCC42FA1051A00C54FBD /* Pickup.swift */; };
+		07B1CCC72FA1061A00C54FBD /* Tower.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B1CCC62FA1061A00C54FBD /* Tower.swift */; };
 		07B1CCB32F98D54F00C54FBD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB12F98D54F00C54FBD /* Main.storyboard */; };
 		07B1CCB52F98D55000C54FBD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB42F98D55000C54FBD /* Assets.xcassets */; };
 		07B1CCB82F98D55000C54FBD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB62F98D55000C54FBD /* LaunchScreen.storyboard */; };
@@ -34,6 +36,8 @@
 		07B1CCB02FA004A600C54FBD /* PhysicsCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicsCategory.swift; sourceTree = "<group>"; };
 		07B1CCC02FA0051100C54FBD /* Enemy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enemy.swift; sourceTree = "<group>"; };
 		07B1CCC22FA0051A00C54FBD /* WaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveManager.swift; sourceTree = "<group>"; };
+		07B1CCC42FA1051A00C54FBD /* Pickup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pickup.swift; sourceTree = "<group>"; };
+		07B1CCC62FA1061A00C54FBD /* Tower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tower.swift; sourceTree = "<group>"; };
 		07B1CCB22F98D54F00C54FBD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		07B1CCB42F98D55000C54FBD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		07B1CCB72F98D55000C54FBD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -79,6 +83,8 @@
 				07B1CCB02FA004A600C54FBD /* PhysicsCategory.swift */,
 				07B1CCC02FA0051100C54FBD /* Enemy.swift */,
 				07B1CCC22FA0051A00C54FBD /* WaveManager.swift */,
+				07B1CCC42FA1051A00C54FBD /* Pickup.swift */,
+				07B1CCC62FA1061A00C54FBD /* Tower.swift */,
 				07B1CCB12F98D54F00C54FBD /* Main.storyboard */,
 				07B1CCB42F98D55000C54FBD /* Assets.xcassets */,
 				07B1CCB62F98D55000C54FBD /* LaunchScreen.storyboard */,
@@ -167,6 +173,8 @@
 				07B1CCBF2FA004A600C54FBD /* PhysicsCategory.swift in Sources */,
 				07B1CCC12FA0051100C54FBD /* Enemy.swift in Sources */,
 				07B1CCC32FA0051A00C54FBD /* WaveManager.swift in Sources */,
+				07B1CCC52FA1051A00C54FBD /* Pickup.swift in Sources */,
+				07B1CCC72FA1061A00C54FBD /* Tower.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

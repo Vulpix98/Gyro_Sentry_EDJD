@@ -11,6 +11,7 @@ final class PlayerDrone: SKShapeNode {
 
     private(set) var config: Config
     private var fireCooldownRemaining: TimeInterval = 0
+    private var gameplayEnabled = true
     var onFire: ((CGFloat) -> Void)?
 
     init(config: Config = Config()) {
@@ -55,6 +56,7 @@ final class PlayerDrone: SKShapeNode {
         input: CGVector,
         clamp: (CGPoint, SKNode) -> CGPoint
     ) {
+        guard gameplayEnabled else { return }
         guard dt > 0 else { return }
 
         move(dt: dt, input: input, clamp: clamp)
@@ -65,6 +67,24 @@ final class PlayerDrone: SKShapeNode {
 
     func onHitEnemy() {
         // TODO: used later for “player dies on collision” mechanics.
+    }
+
+    func deactivateForRespawn() {
+        gameplayEnabled = false
+        isHidden = true
+        fireCooldownRemaining = 0
+        physicsBody?.categoryBitMask = PhysicsCategory.none
+        physicsBody?.contactTestBitMask = PhysicsCategory.none
+    }
+
+    func respawn(at position: CGPoint) {
+        self.position = position
+        gameplayEnabled = true
+        isHidden = false
+        fireCooldownRemaining = 0
+        physicsBody?.categoryBitMask = PhysicsCategory.player
+        physicsBody?.collisionBitMask = PhysicsCategory.none
+        physicsBody?.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.pickup | PhysicsCategory.core
     }
 
     // MARK: - Auto-fire (cadence stub)
