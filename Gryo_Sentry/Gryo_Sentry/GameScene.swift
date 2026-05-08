@@ -45,6 +45,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private let laserDamage: Int = 3
     private let towerPlacementMargin: CGFloat = 28
     private let carrierDropChance: CGFloat = 1.0
+    private let vxNullDropChance: CGFloat = 0.001
     private let playerRespawnDelay: TimeInterval = 3.0
     private let uiTopMargin: CGFloat = 90
 
@@ -436,21 +437,70 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func handlePickupContact(pickupBody: SKPhysicsBody) {
-        setCarryingTower(true)
-        pickupBody.node?.removeFromParent()
+        guard let pickup = pickupBody.node as? Pickup else {
+            pickupBody.node?.removeFromParent()
+            return
+        }
+
+        switch pickup.kind {
+        case .tower:
+            setCarryingTower(true)
+        case .vxNull:
+            activateVXNull()
+        }
+        pickup.removeFromParent()
     }
 
     private func handleEnemyDefeated(at position: CGPoint, wasCarrier: Bool) {
-        guard wasCarrier else { return }
-        guard !isCarryingTower else { return }
-        guard CGFloat.random(in: 0...1) <= carrierDropChance else { return }
-        spawnTowerPickup(at: position)
+        guard gameState == .playing else { return }
+        if wasCarrier {
+            // Carriers only drop tower pickups.
+            guard !isCarryingTower else { return }
+            guard CGFloat.random(in: 0...1) <= carrierDropChance else { return }
+            spawnTowerPickup(at: position)
+            return
+        }
+
+        // Non-carriers can drop bomb pickups.
+        let bombRoll = CGFloat.random(in: 0...1)
+        guard bombRoll <= vxNullDropChance else { return }
+        spawnVXNullPickup(at: position)
     }
 
     private func spawnTowerPickup(at position: CGPoint) {
-        let pickup = Pickup()
+        let pickup = Pickup(config: .init(kind: .tower))
         pickup.position = position
         addChild(pickup)
+    }
+
+    private func spawnVXNullPickup(at position: CGPoint) {
+        let pickup = Pickup(config: .init(kind: .vxNull))
+        pickup.position = position
+        addChild(pickup)
+    }
+
+    private func activateVXNull() {
+        guard gameState == .playing else { return }
+
+        for enemy in enemies where enemy.parent != nil && enemy.isAlive {
+            enemy.kill()
+        }
+        enemies.removeAll { $0.parent == nil || !$0.isAlive }
+        spawnVXNullPulse(at: playerNode.position)
+    }
+
+    private func spawnVXNullPulse(at position: CGPoint) {
+        let pulse = SKShapeNode(circleOfRadius: 14)
+        pulse.position = position
+        pulse.fillColor = SKColor(red: 0.72, green: 0.42, blue: 1.0, alpha: 0.35)
+        pulse.strokeColor = SKColor(red: 0.82, green: 0.62, blue: 1.0, alpha: 0.95)
+        pulse.lineWidth = 2
+        pulse.zPosition = 1150
+        addChild(pulse)
+
+        let grow = SKAction.scale(to: 8.0, duration: 0.22)
+        let fade = SKAction.fadeOut(withDuration: 0.22)
+        pulse.run(.sequence([.group([grow, fade]), .removeFromParent()]))
     }
 
     private func setCarryingTower(_ carrying: Bool) {

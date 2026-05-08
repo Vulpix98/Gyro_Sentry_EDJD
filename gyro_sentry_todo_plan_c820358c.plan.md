@@ -34,7 +34,7 @@ todos:
     status: completed
   - id: optional-vx-null
     content: (Optional, README week 4/rare) Add a tiny probability drop for VX-Null and implement its effect as clearing all enemies safely (respecting game state).
-    status: pending
+    status: completed
   - id: motion-input
     content: "(Move to last for now) Replace the temporary test input (keyboard/touch/virtual stick) with real gyro control. Implement `MotionInput.swift` using CoreMotion (`CMMotionManager`) to provide a stable tilt vector (x/y), including smoothing (low-pass). Add calibration/zero as a stretch stub."
     status: pending
