@@ -16,7 +16,7 @@ todos:
     status: pending
   - id: enemy-and-waves
     content: Implement `Enemy.swift` (basic enemy + optional carrier type flag). Add `WaveManager.swift` holding an array of wave definitions (counts, spawn rate, carrier count) and spawning enemies at screen edges moving toward the core. Render enemies as colored cubes/rects for now.
-    status: pending
+    status: completed
   - id: combat-projectiles
     content: "Implement player laser/projectile or hitscan: choose simplest (hitscan with line effect or small projectile nodes). Apply damage to enemies, handle enemy death, and remove nodes cleanly."
     status: pending

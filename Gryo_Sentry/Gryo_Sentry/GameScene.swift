@@ -22,6 +22,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private let waveManager = WaveManager()
     private var uiRootNode: SKNode?
     private var waveLabel: SKLabelNode?
+    private var nextRoundButton: SKShapeNode?
+    private var nextRoundButtonLabel: SKLabelNode?
     private var gameOverOverlay: SKShapeNode?
     private var restartButton: SKShapeNode?
 
@@ -104,6 +106,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if let restartButton, restartButton.contains(location) {
                 restartGame()
             }
+            return
+        }
+        if let nextRoundButton, !nextRoundButton.isHidden, nextRoundButton.contains(location) {
+            _ = waveManager.startNextRound()
+            refreshUI()
             return
         }
         if activeTouch == nil, let t = touches.first {
@@ -516,6 +523,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         root.addChild(wave)
         waveLabel = wave
 
+        let startButton = SKShapeNode(rectOf: CGSize(width: 210, height: 44), cornerRadius: 10)
+        startButton.fillColor = SKColor(red: 0.18, green: 0.65, blue: 1.0, alpha: 0.95)
+        startButton.strokeColor = SKColor(red: 0.75, green: 0.92, blue: 1.0, alpha: 1.0)
+        startButton.lineWidth = 2
+        startButton.position = CGPoint(x: frame.midX, y: frame.maxY - uiTopMargin - 44)
+        root.addChild(startButton)
+        nextRoundButton = startButton
+
+        let startText = SKLabelNode(fontNamed: "Menlo-Bold")
+        startText.fontSize = 16
+        startText.verticalAlignmentMode = .center
+        startText.fontColor = .white
+        startButton.addChild(startText)
+        nextRoundButtonLabel = startText
+
         let overlay = SKShapeNode(rectOf: CGSize(width: frame.width, height: frame.height))
         overlay.fillColor = SKColor(white: 0.0, alpha: 0.68)
         overlay.strokeColor = .clear
@@ -551,15 +573,29 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func refreshUI() {
         waveLabel?.text = waveText()
+        updateNextRoundButton()
     }
 
     private func waveText() -> String {
-        let totalWaves = max(1, waveManager.waves.count)
-        let currentWave = min(waveManager.waveIndex + 1, totalWaves)
-        if waveManager.waveIndex >= totalWaves {
-            return "Wave Clear"
+        let totalRounds = max(1, waveManager.totalRounds)
+        let roundNumber = min(max(1, waveManager.nextRoundIndex), totalRounds)
+        return "Round \(roundNumber)/\(totalRounds)"
+    }
+
+    private func updateNextRoundButton() {
+        guard let nextRoundButton, let nextRoundButtonLabel else { return }
+        let canStart = gameState == .playing
+            && !isPlayerRespawning
+            && enemies.isEmpty
+            && waveManager.state == .waitingForPlayer
+            && waveManager.upcomingRoundNumber != nil
+
+        nextRoundButton.isHidden = !canStart
+        if canStart, let upcoming = waveManager.upcomingRoundNumber {
+            nextRoundButtonLabel.text = "Start Round \(upcoming)"
+        } else if waveManager.state == .complete {
+            nextRoundButtonLabel.text = nil
         }
-        return "Wave \(currentWave)/\(totalWaves)"
     }
 
     private func showGameOverOverlay(_ visible: Bool) {

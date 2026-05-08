@@ -5,8 +5,9 @@ final class Enemy: SKShapeNode {
         var size: CGSize = CGSize(width: 24, height: 24)
         var cornerRadius: CGFloat = 6
         var speedPointsPerSecond: CGFloat = 120
-        var isCarrier: Bool = false
         var maxHP: Int = 10
+        var isCarrier: Bool = false
+        	
     }
 
     let config: Config
