@@ -1,29 +1,49 @@
 [
   {
     "round": 1,
-    "enemyCount": 5,
-    "carrierCount": 1,
+    "enemies": {
+      "normal": 3,
+      "carrier": 1,
+      "speed": 1,
+      "boss": 0,
+      "tank": 0
+    },
     "initialSpawnRatePerSecond": 0.9,
     "spawnRateIncreasePerSecond": 0.12
   },
   {
     "round": 2,
-    "enemyCount": 8,
-    "carrierCount": 2,
+    "enemies": {
+      "normal": 4,
+      "carrier": 1,
+      "speed": 2,
+      "boss": 0,
+      "tank": 1
+    },
     "initialSpawnRatePerSecond": 1.1,
     "spawnRateIncreasePerSecond": 0.16
   },
   {
     "round": 3,
-    "enemyCount": 12,
-    "carrierCount": 3,
+    "enemies": {
+      "normal": 6,
+      "carrier": 2,
+      "speed": 2,
+      "boss": 1,
+      "tank": 1
+    },
     "initialSpawnRatePerSecond": 1.3,
     "spawnRateIncreasePerSecond": 0.22
   },
   {
     "round": 4,
-    "enemyCount": 16,
-    "carrierCount": 4,
+    "enemies": {
+      "normal": 8,
+      "carrier": 2,
+      "speed": 3,
+      "boss": 1,
+      "tank": 2
+    },
     "initialSpawnRatePerSecond": 1.5,
     "spawnRateIncreasePerSecond": 0.28
   }

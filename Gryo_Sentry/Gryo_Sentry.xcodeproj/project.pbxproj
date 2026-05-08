@@ -23,6 +23,7 @@
 		07B1CCB52F98D55000C54FBD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB42F98D55000C54FBD /* Assets.xcassets */; };
 		07B1CCB82F98D55000C54FBD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCB62F98D55000C54FBD /* LaunchScreen.storyboard */; };
 		07B1CCC82FA2061A00C54FBD /* WaveRounds.json in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCC92FA2061A00C54FBD /* WaveRounds.json */; };
+		07B1CCCA2FA2061A00C54FBD /* EnemyProfiles.json in Resources */ = {isa = PBXBuildFile; fileRef = 07B1CCCB2FA2061A00C54FBD /* EnemyProfiles.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		07B1CCB42F98D55000C54FBD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		07B1CCB72F98D55000C54FBD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		07B1CCC92FA2061A00C54FBD /* WaveRounds.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = WaveRounds.json; sourceTree = "<group>"; };
+		07B1CCCB2FA2061A00C54FBD /* EnemyProfiles.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = EnemyProfiles.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +90,7 @@
 				07B1CCC42FA1051A00C54FBD /* Pickup.swift */,
 				07B1CCC62FA1061A00C54FBD /* Tower.swift */,
 				07B1CCC92FA2061A00C54FBD /* WaveRounds.json */,
+				07B1CCCB2FA2061A00C54FBD /* EnemyProfiles.json */,
 				07B1CCB12F98D54F00C54FBD /* Main.storyboard */,
 				07B1CCB42F98D55000C54FBD /* Assets.xcassets */,
 				07B1CCB62F98D55000C54FBD /* LaunchScreen.storyboard */,
@@ -159,6 +162,7 @@
 				07B1CCB82F98D55000C54FBD /* LaunchScreen.storyboard in Resources */,
 				07B1CCAC2F98D54F00C54FBD /* Actions.sks in Resources */,
 				07B1CCC82FA2061A00C54FBD /* WaveRounds.json in Resources */,
+				07B1CCCA2FA2061A00C54FBD /* EnemyProfiles.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

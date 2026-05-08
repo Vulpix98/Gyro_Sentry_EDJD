@@ -1,0 +1,45 @@
+[
+  {
+    "kind": "normal",
+    "maxHP": 10,
+    "speedPointsPerSecond": 120,
+    "scale": 1.0,
+    "colorHex": "#F25940",
+    "spawnOnDeath": []
+  },
+  {
+    "kind": "carrier",
+    "maxHP": 14,
+    "speedPointsPerSecond": 105,
+    "scale": 1.1,
+    "colorHex": "#FFB84D",
+    "spawnOnDeath": []
+  },
+  {
+    "kind": "speed",
+    "maxHP": 6,
+    "speedPointsPerSecond": 190,
+    "scale": 0.85,
+    "colorHex": "#40D8F7",
+    "spawnOnDeath": []
+  },
+  {
+    "kind": "boss",
+    "maxHP": 75,
+    "speedPointsPerSecond": 75,
+    "scale": 1.7,
+    "colorHex": "#C53DFF",
+    "spawnOnDeath": [
+      { "kind": "normal", "count": 3 },
+      { "kind": "speed", "count": 2 }
+    ]
+  },
+  {
+    "kind": "tank",
+    "maxHP": 36,
+    "speedPointsPerSecond": 70,
+    "scale": 1.35,
+    "colorHex": "#7D8796",
+    "spawnOnDeath": []
+  }
+]

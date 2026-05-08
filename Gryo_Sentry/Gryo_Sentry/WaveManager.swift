@@ -2,18 +2,48 @@ import Foundation
 import CoreGraphics
 
 final class WaveManager {
+    struct EnemyMix: Decodable {
+        var normal: Int
+        var carrier: Int
+        var speed: Int
+        var boss: Int
+        var tank: Int
+
+        func normalized() -> EnemyMix {
+            EnemyMix(
+                normal: max(0, normal),
+                carrier: max(0, carrier),
+                speed: max(0, speed),
+                boss: max(0, boss),
+                tank: max(0, tank)
+            )
+        }
+
+        var totalCount: Int {
+            max(0, normal) + max(0, carrier) + max(0, speed) + max(0, boss) + max(0, tank)
+        }
+
+        func asRemainingMap() -> [EnemyKind: Int] {
+            [
+                .normal: max(0, normal),
+                .carrier: max(0, carrier),
+                .speed: max(0, speed),
+                .boss: max(0, boss),
+                .tank: max(0, tank),
+            ]
+        }
+    }
+
     struct RoundDefinition: Decodable {
         var round: Int
-        var enemyCount: Int
-        var carrierCount: Int
+        var enemies: EnemyMix
         var initialSpawnRatePerSecond: Double
         var spawnRateIncreasePerSecond: Double
 
         func normalized(index: Int) -> RoundDefinition {
             .init(
                 round: max(1, round == 0 ? index + 1 : round),
-                enemyCount: max(0, enemyCount),
-                carrierCount: max(0, min(carrierCount, max(0, enemyCount))),
+                enemies: enemies.normalized(),
                 initialSpawnRatePerSecond: max(0.1, initialSpawnRatePerSecond),
                 spawnRateIncreasePerSecond: max(0.0, spawnRateIncreasePerSecond)
             )
@@ -21,7 +51,7 @@ final class WaveManager {
     }
 
     struct SpawnRequest {
-        var isCarrier: Bool
+        var kind: EnemyKind
     }
 
     enum State {
@@ -36,7 +66,7 @@ final class WaveManager {
     private var timeSinceLastSpawn: Double = 0
     private var elapsedInRound: Double = 0
     private var remainingInRound: Int = 0
-    private var remainingCarriersInRound: Int = 0
+    private var remainingByKind: [EnemyKind: Int] = [:]
 
     let rounds: [RoundDefinition]
 
@@ -60,7 +90,7 @@ final class WaveManager {
         timeSinceLastSpawn = 0
         elapsedInRound = 0
         remainingInRound = 0
-        remainingCarriersInRound = 0
+        remainingByKind = [:]
     }
 
     @discardableResult
@@ -76,8 +106,8 @@ final class WaveManager {
         nextRoundIndex += 1
         timeSinceLastSpawn = 0
         elapsedInRound = 0
-        remainingInRound = round.enemyCount
-        remainingCarriersInRound = round.carrierCount
+        remainingInRound = round.enemies.totalCount
+        remainingByKind = round.enemies.asRemainingMap()
         state = .spawning
         return true
     }
@@ -98,30 +128,20 @@ final class WaveManager {
         while remainingInRound > 0, timeSinceLastSpawn >= spawnInterval {
             timeSinceLastSpawn -= spawnInterval
 
-            let shouldSpawnCarrier: Bool
-            if remainingCarriersInRound <= 0 {
-                shouldSpawnCarrier = false
-            } else if remainingInRound == remainingCarriersInRound {
-                // Force the remaining spawns to be carriers.
-                shouldSpawnCarrier = true
-            } else {
-                // Distribute carriers evenly over remaining spawns.
-                let p = Double(remainingCarriersInRound) / Double(max(1, remainingInRound))
-                shouldSpawnCarrier = Double.random(in: 0...1) < p
-            }
-
-            if shouldSpawnCarrier {
-                remainingCarriersInRound -= 1
+            guard let nextKind = pickNextKind() else {
+                remainingInRound = 0
+                break
             }
 
             remainingInRound -= 1
-            spawns.append(.init(isCarrier: shouldSpawnCarrier))
+            spawns.append(.init(kind: nextKind))
         }
 
         if remainingInRound == 0 {
             activeRoundIndex = nil
             timeSinceLastSpawn = 0
             elapsedInRound = 0
+            remainingByKind = [:]
             state = nextRoundIndex < rounds.count ? .waitingForPlayer : .complete
         }
 
@@ -136,13 +156,30 @@ final class WaveManager {
             !decoded.isEmpty
         else {
             return [
-                .init(round: 1, enemyCount: 5, carrierCount: 1, initialSpawnRatePerSecond: 0.9, spawnRateIncreasePerSecond: 0.12),
-                .init(round: 2, enemyCount: 8, carrierCount: 2, initialSpawnRatePerSecond: 1.1, spawnRateIncreasePerSecond: 0.16),
-                .init(round: 3, enemyCount: 12, carrierCount: 3, initialSpawnRatePerSecond: 1.3, spawnRateIncreasePerSecond: 0.22),
+                .init(round: 1, enemies: .init(normal: 3, carrier: 1, speed: 1, boss: 0, tank: 0), initialSpawnRatePerSecond: 0.9, spawnRateIncreasePerSecond: 0.12),
+                .init(round: 2, enemies: .init(normal: 4, carrier: 1, speed: 2, boss: 0, tank: 1), initialSpawnRatePerSecond: 1.1, spawnRateIncreasePerSecond: 0.16),
+                .init(round: 3, enemies: .init(normal: 6, carrier: 2, speed: 2, boss: 1, tank: 1), initialSpawnRatePerSecond: 1.3, spawnRateIncreasePerSecond: 0.22),
             ]
         }
 
         return decoded
+    }
+
+    private func pickNextKind() -> EnemyKind? {
+        let totalRemaining = remainingByKind.values.reduce(0, +)
+        guard totalRemaining > 0 else { return nil }
+
+        var roll = Int.random(in: 0..<totalRemaining)
+        for kind in EnemyKind.allCases {
+            let count = remainingByKind[kind, default: 0]
+            if count <= 0 { continue }
+            if roll < count {
+                remainingByKind[kind] = count - 1
+                return kind
+            }
+            roll -= count
+        }
+        return nil
     }
 }
 

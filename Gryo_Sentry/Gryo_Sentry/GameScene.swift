@@ -257,7 +257,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func updateWaves(dt: TimeInterval) {
         let spawns = waveManager.update(dt: dt)
         for spawn in spawns {
-            spawnEnemy(isCarrier: spawn.isCarrier)
+            spawnEnemy(kind: spawn.kind)
         }
     }
 
@@ -274,13 +274,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for tower in towers where tower.parent != nil {
             let targetBefore = nearestEnemy(to: tower.position, maxRange: tower.config.fireRangePoints)
             let wasAlive = targetBefore?.isAlive ?? false
-            let wasCarrier = targetBefore?.config.isCarrier ?? false
             let targetPosition = targetBefore?.position
 
             if let firedTarget = tower.updateAndFireIfReady(dt: dt, acquireTarget: nearestEnemy) {
                 spawnTowerBeamEffect(from: tower.position, to: firedTarget.position)
                 if wasAlive, let resolvedTarget = targetBefore, !resolvedTarget.isAlive {
-                    handleEnemyDefeated(at: targetPosition ?? resolvedTarget.position, wasCarrier: wasCarrier)
+                    handleEnemyDefeated(resolvedTarget, at: targetPosition ?? resolvedTarget.position)
                 }
             }
 
@@ -295,11 +294,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func playerAutofire(range: CGFloat) {
         guard let target = nearestEnemy(to: playerNode.position, maxRange: range) else { return }
         let targetWasAlive = target.isAlive
-        let targetWasCarrier = target.config.isCarrier
         let targetPosition = target.position
         target.applyDamage(laserDamage)
         if targetWasAlive, !target.isAlive {
-            handleEnemyDefeated(at: targetPosition, wasCarrier: targetWasCarrier)
+            handleEnemyDefeated(target, at: targetPosition)
         }
         spawnLaserEffect(from: playerNode.position, to: target.position)
     }
@@ -356,9 +354,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         line.run(.sequence([fade, remove]))
     }
 
-    private func spawnEnemy(isCarrier: Bool) {
-        let enemy = Enemy(config: .init(isCarrier: isCarrier))
+    private func spawnEnemy(kind: EnemyKind, at position: CGPoint? = nil) {
+        let enemy = Enemy(kind: kind, profile: EnemyProfiles.shared.profile(for: kind))
         enemy.position = randomSpawnPointOnEdge(padding: 40)
+        if let position {
+            enemy.position = position
+        }
         addChild(enemy)
         enemies.append(enemy)
     }
@@ -414,7 +415,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func handleCoreEnemyContact(coreBody: SKPhysicsBody, enemyBody: SKPhysicsBody) {
         _ = coreBody
         if let enemy = enemyBody.node as? Enemy {
-            handleEnemyDefeated(at: enemy.position, wasCarrier: enemy.config.isCarrier)
+            handleEnemyDefeated(enemy, at: enemy.position)
             enemy.kill()
         } else {
             enemyBody.node?.removeFromParent()
@@ -426,7 +427,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         guard !isPlayerRespawning else { return }
 
         if let enemy = enemyBody.node as? Enemy {
-            handleEnemyDefeated(at: enemy.position, wasCarrier: enemy.config.isCarrier)
+            handleEnemyDefeated(enemy, at: enemy.position)
             enemy.kill()
         } else {
             enemyBody.node?.removeFromParent()
@@ -451,20 +452,41 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         pickup.removeFromParent()
     }
 
-    private func handleEnemyDefeated(at position: CGPoint, wasCarrier: Bool) {
+    private func handleEnemyDefeated(_ enemy: Enemy, at position: CGPoint) {
         guard gameState == .playing else { return }
-        if wasCarrier {
+        if enemy.kind == .carrier {
             // Carriers only drop tower pickups.
             guard !isCarryingTower else { return }
             guard CGFloat.random(in: 0...1) <= carrierDropChance else { return }
             spawnTowerPickup(at: position)
+            spawnEnemiesFromDeath(of: enemy, at: position)
             return
         }
 
         // Non-carriers can drop bomb pickups.
         let bombRoll = CGFloat.random(in: 0...1)
-        guard bombRoll <= vxNullDropChance else { return }
-        spawnVXNullPickup(at: position)
+        if bombRoll <= vxNullDropChance {
+            spawnVXNullPickup(at: position)
+        }
+
+        spawnEnemiesFromDeath(of: enemy, at: position)
+    }
+
+    private func spawnEnemiesFromDeath(of enemy: Enemy, at position: CGPoint) {
+        guard !enemy.profile.spawnOnDeath.isEmpty else { return }
+        for rule in enemy.profile.spawnOnDeath {
+            guard rule.count > 0 else { continue }
+            for _ in 0..<rule.count {
+                let offset = CGPoint(
+                    x: CGFloat.random(in: -36...36),
+                    y: CGFloat.random(in: -36...36)
+                )
+                spawnEnemy(
+                    kind: rule.kind,
+                    at: CGPoint(x: position.x + offset.x, y: position.y + offset.y)
+                )
+            }
+        }
     }
 
     private func spawnTowerPickup(at position: CGPoint) {
