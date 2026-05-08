@@ -31,7 +31,7 @@ todos:
     status: pending
   - id: ui-and-game-over
     content: Add minimal UI (wave number, core HP bar/text) and a game over overlay with restart. Keep it simple with `SKLabelNode`/`SKShapeNode` (optional helper `GameUI.swift`).
-    status: pending
+    status: completed
   - id: optional-vx-null
     content: (Optional, README week 4/rare) Add a tiny probability drop for VX-Null and implement its effect as clearing all enemies safely (respecting game state).
     status: pending

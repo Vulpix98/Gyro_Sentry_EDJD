@@ -20,6 +20,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var isPlayerRespawning = false
     private var playerRespawnRemaining: TimeInterval = 0
     private let waveManager = WaveManager()
+    private var uiRootNode: SKNode?
+    private var waveLabel: SKLabelNode?
+    private var gameOverOverlay: SKShapeNode?
+    private var restartButton: SKShapeNode?
 
     // MARK: - Simulation
     private var lastUpdateTime: TimeInterval = 0
@@ -40,6 +44,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private let towerPlacementMargin: CGFloat = 28
     private let carrierDropChance: CGFloat = 1.0
     private let playerRespawnDelay: TimeInterval = 3.0
+    private let uiTopMargin: CGFloat = 90
 
     override func didMove(to view: SKView) {
         removeAllActions()
@@ -53,6 +58,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.contactDelegate = self
 
         setupWorld()
+        setupUI()
+        refreshUI()
     }
 
     private func setupWorld() {
@@ -91,7 +98,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: - Input (temporary)
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard gameState == .playing else { return }
+        guard let firstTouch = touches.first else { return }
+        let location = firstTouch.location(in: self)
+        if gameState == .gameOver {
+            if let restartButton, restartButton.contains(location) {
+                restartGame()
+            }
+            return
+        }
         if activeTouch == nil, let t = touches.first {
             activeTouch = t
             updateInput(from: t.location(in: self))
@@ -153,6 +167,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         updateWaves(dt: dt)
         updateEnemies(dt: dt)
         updateTowers(dt: dt)
+        refreshUI()
     }
 
     private func clampToWorld(_ position: CGPoint, _ node: SKNode) -> CGPoint {
@@ -228,6 +243,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         // Light red background on game over.
         backgroundColor = SKColor(red: 0.35, green: 0.05, blue: 0.08, alpha: 1.0)
+        showGameOverOverlay(true)
     }
 
     private func updateWaves(dt: TimeInterval) {
@@ -479,5 +495,100 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             x: min(max(position.x, minX), maxX),
             y: min(max(position.y, minY), maxY)
         )
+    }
+
+    // MARK: - UI
+
+    private func setupUI() {
+        uiRootNode?.removeFromParent()
+
+        let root = SKNode()
+        root.zPosition = 4000
+        addChild(root)
+        uiRootNode = root
+
+        let wave = SKLabelNode(fontNamed: "Menlo-Bold")
+        wave.fontSize = 20
+        wave.horizontalAlignmentMode = .center
+        wave.verticalAlignmentMode = .center
+        wave.fontColor = SKColor(red: 0.85, green: 0.95, blue: 1.0, alpha: 1.0)
+        wave.position = CGPoint(x: frame.midX, y: frame.maxY - uiTopMargin)
+        root.addChild(wave)
+        waveLabel = wave
+
+        let overlay = SKShapeNode(rectOf: CGSize(width: frame.width, height: frame.height))
+        overlay.fillColor = SKColor(white: 0.0, alpha: 0.68)
+        overlay.strokeColor = .clear
+        overlay.position = CGPoint(x: frame.midX, y: frame.midY)
+        overlay.zPosition = 4500
+        overlay.isHidden = true
+        root.addChild(overlay)
+        gameOverOverlay = overlay
+
+        let gameOverText = SKLabelNode(fontNamed: "Menlo-Bold")
+        gameOverText.text = "GAME OVER"
+        gameOverText.fontSize = 34
+        gameOverText.fontColor = SKColor(red: 1.0, green: 0.35, blue: 0.35, alpha: 1.0)
+        gameOverText.verticalAlignmentMode = .center
+        gameOverText.position = CGPoint(x: 0, y: 72)
+        overlay.addChild(gameOverText)
+
+        let restart = SKShapeNode(rectOf: CGSize(width: 190, height: 52), cornerRadius: 12)
+        restart.fillColor = SKColor(red: 0.16, green: 0.56, blue: 1.0, alpha: 0.95)
+        restart.strokeColor = SKColor(red: 0.7, green: 0.9, blue: 1.0, alpha: 1.0)
+        restart.lineWidth = 2
+        restart.position = CGPoint(x: 0, y: -8)
+        overlay.addChild(restart)
+        restartButton = restart
+
+        let restartText = SKLabelNode(fontNamed: "Menlo-Bold")
+        restartText.text = "Restart"
+        restartText.fontSize = 24
+        restartText.fontColor = .white
+        restartText.verticalAlignmentMode = .center
+        restart.addChild(restartText)
+    }
+
+    private func refreshUI() {
+        waveLabel?.text = waveText()
+    }
+
+    private func waveText() -> String {
+        let totalWaves = max(1, waveManager.waves.count)
+        let currentWave = min(waveManager.waveIndex + 1, totalWaves)
+        if waveManager.waveIndex >= totalWaves {
+            return "Wave Clear"
+        }
+        return "Wave \(currentWave)/\(totalWaves)"
+    }
+
+    private func showGameOverOverlay(_ visible: Bool) {
+        gameOverOverlay?.isHidden = !visible
+    }
+
+    private func restartGame() {
+        removeAllActions()
+        removeAllChildren()
+
+        gameState = .playing
+        backgroundColor = .black
+        lastUpdateTime = 0
+        activeTouch = nil
+        inputVector = .zero
+        keyLeft = false
+        keyRight = false
+        keyUp = false
+        keyDown = false
+        isCarryingTower = false
+        isPlayerRespawning = false
+        playerRespawnRemaining = 0
+        enemies.removeAll()
+        towers.removeAll()
+        waveManager.reset()
+
+        setupWorld()
+        setupUI()
+        showGameOverOverlay(false)
+        refreshUI()
     }
 }
