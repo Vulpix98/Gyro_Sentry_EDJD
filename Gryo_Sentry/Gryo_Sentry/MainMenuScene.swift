@@ -6,35 +6,44 @@ class MainMenuScene: SKScene {
     private var playButton: SKNode?
     
     override func didMove(to view: SKView) {
-        // O "//" ajuda a encontrar o nó mesmo que ele esteja dentro de outros grupos
-        playButton = self.childNode(withName: "//playButton")
-        
-        // Dica: Podes mudar a cor de fundo do menu aqui se quiseres testar visualmente
-        self.backgroundColor = .black
-    }
+            self.backgroundColor = .black // Garante que não é um preto "vazio"
+            
+            // Tenta encontrar o botão do ficheiro .sks
+            playButton = self.childNode(withName: "//playButton")
+            
+            // SE NÃO ENCONTRAR (Plano B via Código), vamos criar um texto simples:
+            if playButton == nil {
+                let label = SKLabelNode(fontNamed: "Menlo-Bold")
+                label.text = "START GAME"
+                label.name = "playButton" // Importante para o touchesBegan reconhecer
+                label.fontSize = 40
+                label.fontColor = .cyan
+                label.position = CGPoint(x: frame.midX, y: frame.midY)
+                addChild(label)
+                playButton = label
+                print("Aviso: playButton criado via código pois não foi encontrado no .sks")
+            }
+        }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
-        
-        // 1. Removido o cast desnecessário (resolve o warning)
-        // 2. Simplificada a verificação do nó tocado
-        let tappedNode = self.atPoint(location)
-        
-        if tappedNode == playButton || tappedNode.name == "playButton" {
-            loadGameScene()
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            let nodesAtPoint = self.nodes(at: location)
+            
+            for node in nodesAtPoint {
+                if node == playButton || node.name == "playButton" {
+                    loadGameScene()
+                    return
+                }
+            }
         }
-    }
     
     private func loadGameScene() {
-        // Carrega a cena principal onde estão os teus inimigos e o drone
-        if let gameScene = SKScene(fileNamed: "GameScene") {
+            // Se o teu jogo é feito via código:
+            let gameScene = GameScene(size: self.size)
             gameScene.scaleMode = .aspectFill
             
-            // Transição de 1 segundo para não ser um corte abrupto
             let transition = SKTransition.fade(withDuration: 1.0)
-            
             self.view?.presentScene(gameScene, transition: transition)
         }
-    }
 }

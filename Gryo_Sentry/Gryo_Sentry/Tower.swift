@@ -7,7 +7,7 @@ final class Tower: SKShapeNode {
         var maxEnergy: CGFloat = 12.0
         var energyDrainPerSecond: CGFloat = 1.0
         var fireCooldownSeconds: TimeInterval = 0.35
-        var fireRangePoints: CGFloat = 260
+        var fireRangePoints: CGFloat = 180
         var damagePerShot: Int = 4
     }
 

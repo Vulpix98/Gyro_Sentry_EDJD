@@ -6,7 +6,7 @@ final class PlayerDrone: SKShapeNode {
         var cornerRadius: CGFloat = 6
         var speedPointsPerSecond: CGFloat = 420
         var fireCooldownSeconds: TimeInterval = 0.18
-        var fireRangePoints: CGFloat = 360
+        var fireRangePoints: CGFloat = 180
     }
 
     private(set) var config: Config

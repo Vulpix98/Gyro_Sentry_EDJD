@@ -6,6 +6,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private enum GameState {
         case playing
         case gameOver
+        case victory
     }
 
     private var gameState: GameState = .playing
@@ -26,6 +27,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var nextRoundButtonLabel: SKLabelNode?
     private var gameOverOverlay: SKShapeNode?
     private var restartButton: SKShapeNode?
+    private var victoryOverlay: SKShapeNode?
+    private var backToMenuButton: SKShapeNode?
 
     // MARK: - Simulation
     private var lastUpdateTime: TimeInterval = 0
@@ -103,6 +106,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let firstTouch = touches.first else { return }
         let location = firstTouch.location(in: self)
+        // VERIFICAÇÃO DE VITÓRIA
+            if gameState == .victory {
+                // Usamos nodes(at:) para detectar o botão mesmo dentro do overlay
+                let touchedNodes = nodes(at: location)
+                for node in touchedNodes {
+                    if node == backToMenuButton || node.name == "backToMenuButton" {
+                        goToMainMenu()
+                        return
+                    }
+                }
+            }
+        
         if gameState == .gameOver {
             if let restartButton, restartButton.contains(location) {
                 restartGame()
@@ -119,6 +134,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             updateInput(from: t.location(in: self))
         }
     }
+    
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard gameState == .playing else { return }
@@ -176,6 +192,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         updateEnemies(dt: dt)
         updateTowers(dt: dt)
         refreshUI()
+        checkVictoryCondition()
+    }
+    
+    private func triggerVictory() {
+        guard gameState == .playing else { return }
+        gameState = .victory
+        
+        // Mostra o overlay
+        victoryOverlay?.isHidden = false
+        victoryOverlay?.zPosition = 5000
+        
+        // Opcional: Efeito visual no fundo
+        backgroundColor = SKColor(red: 0.05, green: 0.15, blue: 0.05, alpha: 1.0)
+    }
+    
+    private func checkVictoryCondition() {
+        if waveManager.state == .complete && enemies.isEmpty {
+            triggerVictory()
+        }
     }
 
     private func clampToWorld(_ position: CGPoint, _ node: SKNode) -> CGPoint {
@@ -579,69 +614,76 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: - UI
 
     private func setupUI() {
-        uiRootNode?.removeFromParent()
+            uiRootNode?.removeFromParent()
 
-        let root = SKNode()
-        root.zPosition = 4000
-        addChild(root)
-        uiRootNode = root
+            let root = SKNode()
+            root.zPosition = 4000
+            addChild(root)
+            uiRootNode = root
 
-        let wave = SKLabelNode(fontNamed: "Menlo-Bold")
-        wave.fontSize = 20
-        wave.horizontalAlignmentMode = .center
-        wave.verticalAlignmentMode = .center
-        wave.fontColor = SKColor(red: 0.85, green: 0.95, blue: 1.0, alpha: 1.0)
-        wave.position = CGPoint(x: frame.midX, y: frame.maxY - uiTopMargin)
-        root.addChild(wave)
-        waveLabel = wave
+            // --- Label da Onda ---
+            let wave = SKLabelNode(fontNamed: "Menlo-Bold")
+            wave.fontSize = 20
+            wave.horizontalAlignmentMode = .center
+            wave.verticalAlignmentMode = .center
+            wave.fontColor = SKColor(red: 0.85, green: 0.95, blue: 1.0, alpha: 1.0)
+            wave.position = CGPoint(x: frame.midX, y: frame.maxY - uiTopMargin)
+            root.addChild(wave)
+            waveLabel = wave
 
-        let startButton = SKShapeNode(rectOf: CGSize(width: 210, height: 44), cornerRadius: 10)
-        startButton.fillColor = SKColor(red: 0.18, green: 0.65, blue: 1.0, alpha: 0.95)
-        startButton.strokeColor = SKColor(red: 0.75, green: 0.92, blue: 1.0, alpha: 1.0)
-        startButton.lineWidth = 2
-        startButton.position = CGPoint(x: frame.midX, y: frame.maxY - uiTopMargin - 44)
-        root.addChild(startButton)
-        nextRoundButton = startButton
+            // --- Botão Próxima Ronda ---
+            let startButton = SKShapeNode(rectOf: CGSize(width: 210, height: 44), cornerRadius: 10)
+            startButton.fillColor = SKColor(red: 0.18, green: 0.65, blue: 1.0, alpha: 0.95)
+            startButton.strokeColor = SKColor(red: 0.75, green: 0.92, blue: 1.0, alpha: 1.0)
+            startButton.lineWidth = 2
+            startButton.position = CGPoint(x: frame.midX, y: frame.maxY - uiTopMargin - 44)
+            root.addChild(startButton)
+            nextRoundButton = startButton
 
-        let startText = SKLabelNode(fontNamed: "Menlo-Bold")
-        startText.fontSize = 16
-        startText.verticalAlignmentMode = .center
-        startText.fontColor = .white
-        startButton.addChild(startText)
-        nextRoundButtonLabel = startText
+            let startText = SKLabelNode(fontNamed: "Menlo-Bold")
+            startText.fontSize = 16
+            startText.verticalAlignmentMode = .center
+            startText.fontColor = .white
+            startButton.addChild(startText)
+            nextRoundButtonLabel = startText
 
-        let overlay = SKShapeNode(rectOf: CGSize(width: frame.width, height: frame.height))
-        overlay.fillColor = SKColor(white: 0.0, alpha: 0.68)
-        overlay.strokeColor = .clear
-        overlay.position = CGPoint(x: frame.midX, y: frame.midY)
-        overlay.zPosition = 4500
-        overlay.isHidden = true
-        root.addChild(overlay)
-        gameOverOverlay = overlay
+            // --- Overlay de Game Over ---
+            let overlay = SKShapeNode(rectOf: CGSize(width: frame.width, height: frame.height))
+            overlay.fillColor = SKColor(white: 0.0, alpha: 0.68)
+            overlay.strokeColor = .clear
+            overlay.position = CGPoint(x: frame.midX, y: frame.midY)
+            overlay.zPosition = 4500
+            overlay.isHidden = true
+            root.addChild(overlay)
+            gameOverOverlay = overlay
 
-        let gameOverText = SKLabelNode(fontNamed: "Menlo-Bold")
-        gameOverText.text = "GAME OVER"
-        gameOverText.fontSize = 34
-        gameOverText.fontColor = SKColor(red: 1.0, green: 0.35, blue: 0.35, alpha: 1.0)
-        gameOverText.verticalAlignmentMode = .center
-        gameOverText.position = CGPoint(x: 0, y: 72)
-        overlay.addChild(gameOverText)
+            let gameOverText = SKLabelNode(fontNamed: "Menlo-Bold")
+            gameOverText.text = "GAME OVER"
+            gameOverText.fontSize = 34
+            gameOverText.fontColor = SKColor(red: 1.0, green: 0.35, blue: 0.35, alpha: 1.0)
+            gameOverText.verticalAlignmentMode = .center
+            gameOverText.position = CGPoint(x: 0, y: 72)
+            overlay.addChild(gameOverText)
 
-        let restart = SKShapeNode(rectOf: CGSize(width: 190, height: 52), cornerRadius: 12)
-        restart.fillColor = SKColor(red: 0.16, green: 0.56, blue: 1.0, alpha: 0.95)
-        restart.strokeColor = SKColor(red: 0.7, green: 0.9, blue: 1.0, alpha: 1.0)
-        restart.lineWidth = 2
-        restart.position = CGPoint(x: 0, y: -8)
-        overlay.addChild(restart)
-        restartButton = restart
+            let restart = SKShapeNode(rectOf: CGSize(width: 190, height: 52), cornerRadius: 12)
+            restart.fillColor = SKColor(red: 0.16, green: 0.56, blue: 1.0, alpha: 0.95)
+            restart.strokeColor = SKColor(red: 0.7, green: 0.9, blue: 1.0, alpha: 1.0)
+            restart.lineWidth = 2
+            restart.position = CGPoint(x: 0, y: -8)
+            overlay.addChild(restart)
+            restartButton = restart
 
-        let restartText = SKLabelNode(fontNamed: "Menlo-Bold")
-        restartText.text = "Restart"
-        restartText.fontSize = 24
-        restartText.fontColor = .white
-        restartText.verticalAlignmentMode = .center
-        restart.addChild(restartText)
-    }
+            let restartText = SKLabelNode(fontNamed: "Menlo-Bold")
+            restartText.text = "Restart"
+            restartText.fontSize = 24
+            restartText.fontColor = .white
+            restartText.verticalAlignmentMode = .center
+            restart.addChild(restartText)
+
+            // --- CHAMADA PARA CRIAR A UI DE VITÓRIA ---
+            // Esta é a linha que faltava para conectar tudo!
+            setupVictoryUI()
+        }
 
     private func refreshUI() {
         waveLabel?.text = waveText()
@@ -699,4 +741,64 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         showGameOverOverlay(false)
         refreshUI()
     }
+    
+    private func setupVictoryUI() {
+        guard let uiRoot = uiRootNode else { return }
+
+        // Overlay de fundo
+        let overlay = SKShapeNode(rectOf: CGSize(width: frame.width, height: frame.height))
+        overlay.fillColor = SKColor(red: 0.0, green: 0.2, blue: 0.4, alpha: 0.8) // Azul escuro transparente
+        overlay.strokeColor = .clear
+        overlay.position = CGPoint(x: frame.midX, y: frame.midY)
+        overlay.zPosition = 5000
+        overlay.isHidden = true
+        uiRoot.addChild(overlay)
+        victoryOverlay = overlay
+
+        let winText = SKLabelNode(fontNamed: "Menlo-Bold")
+        winText.text = "MISSION COMPLETE"
+        winText.fontSize = 34
+        winText.fontColor = .cyan
+        winText.position = CGPoint(x: 0, y: 72)
+        overlay.addChild(winText)
+
+        // Botão Voltar ao Menu
+        let menuBtn = SKShapeNode(rectOf: CGSize(width: 220, height: 52), cornerRadius: 12)
+        menuBtn.fillColor = SKColor(red: 0.1, green: 0.4, blue: 0.1, alpha: 0.95) // Verde
+        menuBtn.strokeColor = .white
+        menuBtn.lineWidth = 2
+        menuBtn.position = CGPoint(x: 0, y: -8)
+        menuBtn.name = "backToMenuButton" // ADICIONE ESTA LINHA
+        overlay.addChild(menuBtn)
+        backToMenuButton = menuBtn
+
+        let menuLabel = SKLabelNode(fontNamed: "Menlo-Bold")
+        menuLabel.text = "Main Menu"
+        menuLabel.fontSize = 22
+        menuLabel.verticalAlignmentMode = .center
+        menuBtn.addChild(menuLabel)
+    }
+    
+    // MARK: - States
+    
+    private func goToMainMenu() {
+        // 1. Tentar carregar o ficheiro .sks do seu Menu
+        if let menuScene = SKScene(fileNamed: "MainMenuScene") as? MainMenuScene {
+            menuScene.size = self.size
+            menuScene.scaleMode = .aspectFill
+            
+            let transition = SKTransition.crossFade(withDuration: 1.0)
+            self.view?.presentScene(menuScene, transition: transition)
+        } else {
+            // Se o ficheiro .sks falhar, isto avisa-te no console
+            print("Erro: Não foi possível encontrar o ficheiro MainMenuScene.sks")
+            
+            // Opcional: manter o plano B aqui apenas para não travar o jogo
+            let fallbackMenu = MainMenuScene(size: self.size)
+            fallbackMenu.scaleMode = .aspectFill
+            self.view?.presentScene(fallbackMenu, transition: SKTransition.fade(withDuration: 1.0))
+        }
+    }
 }
+
+
